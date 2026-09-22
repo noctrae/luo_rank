@@ -256,7 +256,7 @@
         }
     }
 
-    // 核心渲染逻辑
+    // 核心渲染逻辑（已增强主播匹配逻辑，兼容繁简体与包含匹配）
     async function updateDashboard() {
         try {
             const data = await fetchRankList();
@@ -268,20 +268,34 @@
 
             document.getElementById("total-count").innerText = `共 ${totalCount}${hasMore ? '+' : ''} 名`;
 
-            // 查找目标主播“羅”
-            const targetIndex = rankList.findIndex(item => 
-                item.rank_info && item.rank_info.element_info && item.rank_info.element_info.nick_name === CONFIG.TARGET_NAME
-            );
+            // 定义目标查找关键字（包含繁体“羅”与简体“罗”）
+            const targetKeywords = [CONFIG.TARGET_NAME, "羅", "罗"];
+
+            // 1. 优先尝试：完全匹配（精确匹配 羅 或 罗）
+            let targetIndex = rankList.findIndex(item => {
+                const nick = item.rank_info?.element_info?.nick_name || "";
+                return targetKeywords.some(kw => nick.trim() === kw);
+            });
+
+            // 2. 备选尝试：如果完全匹配找不到，使用包含匹配（includes）
+            if (targetIndex === -1) {
+                targetIndex = rankList.findIndex(item => {
+                    const nick = item.rank_info?.element_info?.nick_name || "";
+                    return targetKeywords.some(kw => nick.includes(kw));
+                });
+            }
 
             const container = document.getElementById("rank-container");
             container.innerHTML = "";
 
             if (targetIndex === -1) {
-                container.innerHTML = `<div class="loading">未在榜单前 ${totalCount} 名中找到主播“${CONFIG.TARGET_NAME}”</div>`;
+                container.innerHTML = `<div class="loading">未在榜单前 ${totalCount} 名中找到包含“${CONFIG.TARGET_NAME}”的主播</div>`;
                 return;
             }
 
             const targetItem = rankList[targetIndex];
+            // 取得 API 中主播实际的真实昵称（例如：罗）
+            const realTargetName = targetItem.rank_info.element_info.nick_name;
             const targetScore = Number(targetItem.rank_info.score || 0);
 
             // 安全计算前 2 名和后 2 名（避免数组越界）
@@ -294,7 +308,7 @@
                 const rank = item.rank_info.rank;
                 const name = item.rank_info.element_info.nick_name;
                 const score = Number(item.rank_info.score || 0);
-                const isTarget = (name === CONFIG.TARGET_NAME);
+                const isTarget = (item === targetItem); // 以物件引用判断是否为目标主播
 
                 const card = document.createElement("div");
                 card.className = `anchor-card ${isTarget ? 'target' : ''}`;
@@ -303,10 +317,10 @@
                 if (!isTarget) {
                     if (score > targetScore) {
                         const diff = score - targetScore;
-                        diffHtml = `<div class="diff-tag ahead">领先 羅 ${formatScore(diff)}</div>`;
+                        diffHtml = `<div class="diff-tag ahead">领先 ${realTargetName} ${formatScore(diff)}</div>`;
                     } else {
                         const diff = targetScore - score;
-                        diffHtml = `<div class="diff-tag behind">落后 羅 ${formatScore(diff)}</div>`;
+                        diffHtml = `<div class="diff-tag behind">落后 ${realTargetName} ${formatScore(diff)}</div>`;
                     }
                 } else {
                     diffHtml = `<div class="diff-tag" style="color: #ffffff; background: rgba(255,255,255,0.2);">监测中</div>`;
@@ -331,7 +345,6 @@
             showError(`数据获取失败: ${err.message}。如果持续失败，代表需要部署 CORS 云函数代理。`);
         }
     }
-
     // 倒计时控制
     function startTimer() {
         countdown = CONFIG.REFRESH_INTERVAL;

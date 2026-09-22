@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>造梦师S3巅峰赛｜羅 全自动看板</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto}
+body{background:#1a1a26;color:#fff;padding:20px;max-width:900px;margin:0 auto}
+h1{text-align:center;font-size:26px;margin-bottom:8px;color:#ffd064}
+.updateText{text-align:center;color:#aaa;font-size:14px;margin-bottom:20px}
+.main-card{border:2px solid #ffd064;padding:22px;border-radius:12px;text-align:center;margin-bottom:16px}
+.name-text{font-size:24px;font-weight:bold;margin-bottom:6px}
+.score-big{font-size:42px;font-weight:bold;margin:10px 0;color:#ffd064}
+.rank-text{font-size:18px;color:#ddd}
+.row-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.block{padding:18px;border-radius:10px;text-align:center}
+.prev{background:#42262f}
+.next{background:#203838}
+.diff-positive{color:#76ff98;font-weight:bold;font-size:20px}
+.diff-negative{color:#ff7b88;font-weight:bold;font-size:20px}
+.tip{text-align:center;color:#888;font-size:13px;margin-top:12px}
+.loading{text-align:center;font-size:18px;color:#ffdd77}
+</style>
+</head>
+<body>
+<h1>造梦师S3巅峰赛 — 羅</h1>
+<div class="updateText">最后更新：<span id="lastUpdate">等待获取数据</span></div>
+<div class="loading" id="loading">正在拉取榜单...</div>
+
+<div id="board" style="display:none">
+    <div class="main-card">
+        <div class="name-text">羅</div>
+        <div class="score-big" id="showScore">0</div>
+        <div class="rank-text">当前排名：第 <span id="showRank">0</span> 名</div>
+    </div>
+    <div class="row-two">
+        <div class="block prev">
+            <div>上一位</div>
+            <div style="font-size:22px;margin:6px 0" id="showPrevScore">0</div>
+            <div id="diffUp"></div>
+        </div>
+        <div class="block next">
+            <div>下一位</div>
+            <div style="font-size:22px;margin:6px 0" id="showNextScore">0</div>
+            <div id="diffDown"></div>
+        </div>
+    </div>
+</div>
+
+<div class="tip">每30秒自动拉取榜单<br>23:59前：半决赛｜0点后：巅峰对决</div>
+
+<script>
+const API_URL = "/api/proxy";
+
+async function fetchData(){
+  try{
+    const res = await fetch(API_URL);
+    const json = await res.json();
+    if(json.code !==0 || !json.data){
+      document.getElementById('loading').innerText=json.msg||"获取榜单失败";
+      return;
+    }
+    document.getElementById('loading').style.display="none";
+    document.getElementById('board').style.display="block";
+    const d = json.data;
+    document.getElementById('showRank').innerText=d.rank;
+    document.getElementById('showScore').innerText=d.score.toLocaleString();
+    document.getElementById('showPrevScore').innerText=d.prevScore?.toLocaleString()??"-";
+    document.getElementById('showNextScore').innerText=d.nextScore?.toLocaleString()??"-";
+
+    const diffUp = d.score - d.prevScore;
+    const diffDown = d.nextScore - d.score;
+    document.getElementById('diffUp').innerText = diffUp>0 ? `+${diffUp.toLocaleString()}` : `${diffUp.toLocaleString()}`;
+    document.getElementById('diffDown').innerText = diffDown>0 ? `+${diffDown.toLocaleString()}` : `${diffDown.toLocaleString()}`;
+    const now=new Date();
+    document.getElementById('lastUpdate').innerText = now.toLocaleString();
+  }catch(e){
+    document.getElementById('loading').innerText="网络请求异常";
+  }
+}
+fetchData();
+setInterval(fetchData,30000);
+</script>
+</body>
+</html>

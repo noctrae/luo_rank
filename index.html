@@ -176,7 +176,7 @@
     </main>
 
     <div class="footer-info">
-        <span id="total-count">共 -- 名</span> | 自动刷新间隔: 15 秒
+        <span id="total-count">共 -- 名</span> | 自动刷新间隔: 5 秒
     </div>
 </div>
 
@@ -184,7 +184,7 @@
     // 基础配置
     const CONFIG = {
         TARGET_NAME: "羅",       // 目标主播名字（完全匹配）
-        REFRESH_INTERVAL: 15,   // 刷新周期（秒）
+        REFRESH_INTERVAL: 5,   // 刷新周期（秒）
         API_URL: "https://webcast.amemv.com/magic/api/v4/MjQxNzU2ODIxMjgx/ranklist/MjQxNzU2ODIxMjkw/list?page_num=1&page_size=50&contributor_count=3&guest_count=1&aid=1128",
         // 跨域备用 Proxy（当原生 fetch 被 CORS 封锁时触发）
         CORS_PROXY: "https://api.allorigins.win/raw?url="

@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>造梦师S3巅峰赛｜羅 全自動看板</title>
+    <title>抖音直播榜单实时监测器</title>
     <style>
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
-            --target-bg: #3b82f6;
+            --target-bg: #2563eb;
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
             --accent-green: #22c55e;
@@ -28,7 +28,7 @@
             color: var(--text-primary);
             display: flex;
             justify-content: center;
-            padding: 20px 12px;
+            padding: 16px 12px;
             min-height: 100vh;
         }
 
@@ -37,31 +37,97 @@
             max-width: 480px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
         }
 
-        header {
+        /* 顶部主看板 */
+        .dashboard-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid var(--target-bg);
+            border-radius: 16px;
+            padding: 18px 16px;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
             text-align: center;
-            background-color: var(--card-bg);
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
         }
 
-        h1 {
+        .dash-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .dash-target-name {
             font-size: 1.25rem;
-            margin-bottom: 8px;
-            color: var(--text-primary);
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .dash-rank-badge {
+            background-color: var(--target-bg);
+            color: #ffffff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        .dash-score {
+            font-size: 2.1rem;
+            font-weight: 800;
+            font-family: monospace;
+            color: #60a5fa;
+            margin: 6px 0;
+        }
+
+        .dash-delta {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .delta-up { color: #86efac; }
+        .delta-down { color: #fca5a5; }
+        .delta-zero { color: var(--text-secondary); }
+
+        /* 左右差距对比区（上一名 | 下一名） */
+        .dash-diff-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .diff-box {
+            background-color: rgba(255, 255, 255, 0.04);
+            padding: 8px 10px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .diff-box .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .diff-box .val {
+            font-size: 0.95rem;
+            font-weight: bold;
+            font-family: monospace;
         }
 
         .status-bar {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-secondary);
             display: flex;
             justify-content: space-between;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px dashed var(--border-color);
+            margin-bottom: 8px;
+            padding: 0 4px;
         }
 
         .card-list {
@@ -73,30 +139,26 @@
         .anchor-card {
             background-color: var(--card-bg);
             border-radius: 10px;
-            padding: 14px 16px;
+            padding: 12px 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             border: 1px solid var(--border-color);
-            transition: transform 0.2s;
         }
 
         .anchor-card.target {
-            background-color: var(--target-bg);
+            background-color: #1d4ed8;
             border-color: #60a5fa;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         .rank-badge {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
-            width: 70px;
+            width: 65px;
             color: var(--text-secondary);
         }
 
-        .anchor-card.target .rank-badge {
-            color: #ffffff;
-        }
+        .anchor-card.target .rank-badge { color: #ffffff; }
 
         .info-section {
             flex-grow: 1;
@@ -104,68 +166,67 @@
             flex-direction: column;
         }
 
-        .nick-name {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .score-val {
-            font-size: 1.1rem;
-            font-weight: bold;
-            font-family: monospace;
-        }
+        .nick-name { font-size: 0.95rem; font-weight: 600; }
+        .score-val { font-size: 1rem; font-weight: bold; font-family: monospace; }
 
         .diff-tag {
-            font-size: 0.8rem;
-            text-align: right;
+            font-size: 0.75rem;
             padding: 4px 8px;
             border-radius: 4px;
             font-weight: 500;
         }
 
-        .diff-tag.ahead {
-            color: #fca5a5;
-            background-color: rgba(239, 68, 68, 0.15);
-        }
-
-        .diff-tag.behind {
-            color: #86efac;
-            background-color: rgba(34, 197, 94, 0.15);
-        }
+        .diff-tag.ahead { color: #fca5a5; background-color: rgba(239, 68, 68, 0.15); }
+        .diff-tag.behind { color: #86efac; background-color: rgba(34, 197, 94, 0.15); }
 
         .footer-info {
             text-align: center;
             font-size: 0.8rem;
             color: var(--text-secondary);
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         .error-msg {
             background-color: rgba(239, 68, 68, 0.2);
             color: var(--accent-red);
             border: 1px solid var(--accent-red);
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             font-size: 0.85rem;
             display: none;
-            word-break: break-all;
         }
 
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: var(--text-secondary);
-        }
+        .loading { text-align: center; padding: 20px; color: var(--text-secondary); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h1>造梦师S3巅峰赛｜羅</h1>
-        <div class="status-bar">
-            <span>最后更新: <span id="last-update">--:--:--</span></span>
-            <span>下次更新: <span id="next-update">60</span>s</span>
+    <div class="status-bar">
+        <span>最后更新: <span id="last-update">--:--:--</span></span>
+        <span>下次刷新: <span id="next-update">60</span>s</span>
+    </div>
+
+    <!-- 顶部核心主看板 -->
+    <header id="main-dashboard" class="dashboard-header">
+        <div class="dash-title">目标主播实时监视</div>
+        <div class="dash-target-name">
+            <span id="dash-name">羅</span>
+            <span id="dash-rank" class="dash-rank-badge">第 -- 名</span>
+        </div>
+        <div id="dash-score" class="dash-score">0.00</div>
+        <div id="dash-delta" class="dash-delta delta-zero">涨幅: -- (较上次)</div>
+
+        <!-- 从左到右：上一名差距 | 下一名差距 -->
+        <div class="dash-diff-grid">
+            <div class="diff-box">
+                <span class="label" id="prev-label">距上一名</span>
+                <span class="val" id="prev-val" style="color: #fca5a5;">--</span>
+            </div>
+            <div class="diff-box">
+                <span class="label" id="next-label">领先下一名</span>
+                <span class="val" id="next-val" style="color: #86efac;">--</span>
+            </div>
         </div>
     </header>
 
@@ -176,25 +237,30 @@
     </main>
 
     <div class="footer-info">
-        <span id="total-count">共 -- 名</span> | 自动刷新间隔: 5 秒
+        <span id="total-count">共 -- 名</span> | 自动刷新间隔: 60 秒
     </div>
 </div>
 
 <script>
-    // 基础配置
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetParam = urlParams.get('target');
+    const customApiParam = urlParams.get('api');
+
+    // 默认“巅峰对决”榜单 API
+    const DEFAULT_API = "https://webcast.amemv.com/magic/api/v4/MjQxNzU2ODIxMjgx/ranklist/MjQxNzU2ODIxMjkw/list?page_num=1&page_size=50&contributor_count=3&guest_count=1&aid=1128";
+
     const CONFIG = {
-        TARGET_NAME: "羅",       // 目标主播名字（完全匹配）
-        REFRESH_INTERVAL: 5,   // 刷新周期（秒）
-        API_URL: "https://webcast.amemv.com/magic/api/v4/MjQxNzU2ODIxMjgx/ranklist/MjQxNzU2ODIxMjkw/list?page_num=1&page_size=50&contributor_count=3&guest_count=1&aid=1128",
-        // 跨域备用 Proxy（当原生 fetch 被 CORS 封锁时触发）
+        TARGET_NAME: targetParam || "羅",
+        REFRESH_INTERVAL: 60,
+        API_URL: customApiParam ? decodeURIComponent(customApiParam) : DEFAULT_API,
         CORS_PROXY: "https://api.allorigins.win/raw?url="
     };
 
     let countdown = CONFIG.REFRESH_INTERVAL;
     let timer = null;
-    let useProxy = false; // 是否触发了 CORS 并开启 Proxy
+    let useProxy = false;
+    let lastTargetScore = null; // 记录上一次的分数以计算涨幅
 
-    // 格式化数字（千分位，保留 2 位小数）
     function formatScore(num) {
         return Number(num).toLocaleString('en-US', {
             minimumFractionDigits: 2,
@@ -202,61 +268,44 @@
         });
     }
 
-    // 格式化时间
     function getNowTimeString() {
-        const d = new Date();
-        return d.toTimeString().split(' ')[0];
+        return new Date().toTimeString().split(' ')[0];
     }
 
-    // 显示错误消息
     function showError(msg) {
         const errBox = document.getElementById("error-box");
         errBox.innerText = msg;
         errBox.style.display = "block";
     }
 
-    // 隐藏错误消息
     function clearError() {
         const errBox = document.getElementById("error-box");
         errBox.innerText = "";
         errBox.style.display = "none";
     }
 
-    // 请求 API 並解析雙層 JSON
     async function fetchRankList() {
-        let requestUrl = useProxy ? CONFIG.CORS_PROXY + encodeURIComponent(CONFIG.API_URL) : CONFIG.API_URL;
+        let currentApi = CONFIG.API_URL;
+        let requestUrl = useProxy ? CONFIG.CORS_PROXY + encodeURIComponent(currentApi) : currentApi;
         
         try {
             const response = await fetch(requestUrl);
-            if (!response.ok) {
-                throw new Error(`HTTP 错误！状态码: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP 错误: ${response.status}`);
 
             const outer = await response.json();
-            
-            // 第一次 Parse 后，data 可能是 JSON 字符串，需二次 Parse
-            let data = outer.data;
-            if (typeof data === "string") {
-                data = JSON.parse(data);
-            }
+            let data = typeof outer.data === "string" ? JSON.parse(outer.data) : outer.data;
 
-            if (!data || !data.rank_list) {
-                throw new Error("API 返回结构不符合预期");
-            }
-
+            if (!data || !data.rank_list) throw new Error("API 返回结构不符合预期");
             return data;
         } catch (err) {
-            // 如果尚未开启代理且遇到 Fetch 失败，判定可能为 CORS 错误，自动升降级
             if (!useProxy && (err.name === 'TypeError' || err.message.includes('Failed to fetch'))) {
-                console.warn("检测到可能存在 CORS 跨域限制，正在切换至 CORS 代理服务器...");
                 useProxy = true;
-                return await fetchRankList(); // 重新请求
+                return await fetchRankList();
             }
             throw err;
         }
     }
 
-    // 核心渲染逻辑（已增强主播匹配逻辑，兼容繁简体与包含匹配）
     async function updateDashboard() {
         try {
             const data = await fetchRankList();
@@ -264,20 +313,16 @@
 
             const rankList = data.rank_list || [];
             const totalCount = rankList.length;
-            const hasMore = data.has_more;
+            document.getElementById("total-count").innerText = `共 ${totalCount}${data.has_more ? '+' : ''} 名`;
 
-            document.getElementById("total-count").innerText = `共 ${totalCount}${hasMore ? '+' : ''} 名`;
-
-            // 定义目标查找关键字（包含繁体“羅”与简体“罗”）
             const targetKeywords = [CONFIG.TARGET_NAME, "羅", "罗"];
 
-            // 1. 优先尝试：完全匹配（精确匹配 羅 或 罗）
+            // 精确比对与包含比对
             let targetIndex = rankList.findIndex(item => {
                 const nick = item.rank_info?.element_info?.nick_name || "";
                 return targetKeywords.some(kw => nick.trim() === kw);
             });
 
-            // 2. 备选尝试：如果完全匹配找不到，使用包含匹配（includes）
             if (targetIndex === -1) {
                 targetIndex = rankList.findIndex(item => {
                     const nick = item.rank_info?.element_info?.nick_name || "";
@@ -289,29 +334,76 @@
             container.innerHTML = "";
 
             if (targetIndex === -1) {
-                container.innerHTML = `<div class="loading">未在榜单前 ${totalCount} 名中找到包含“${CONFIG.TARGET_NAME}”的主播</div>`;
+                container.innerHTML = `<div class="loading">未在榜单前 ${totalCount} 名中找到主播“${CONFIG.TARGET_NAME}”</div>`;
                 return;
             }
 
             const targetItem = rankList[targetIndex];
-            // 取得 API 中主播实际的真实昵称（例如：罗）
             const realTargetName = targetItem.rank_info.element_info.nick_name;
+            const targetRank = targetItem.rank_info.rank;
             const targetScore = Number(targetItem.rank_info.score || 0);
 
-            // 假设想要显示前后各 N 名（例如 N = 3）
-            const range = 5; 
+            // --- 1. 更新顶部主看板数据 ---
+            document.getElementById("dash-name").innerText = realTargetName;
+            document.getElementById("dash-rank").innerText = `第 ${targetRank} 名`;
+            document.getElementById("dash-score").innerText = formatScore(targetScore);
 
-            // 安全计算前 5 名和后 5 名（避免数组越界）
+            // 计算与上次刷新的涨幅
+            const deltaEl = document.getElementById("dash-delta");
+            if (lastTargetScore !== null) {
+                const delta = targetScore - lastTargetScore;
+                if (delta > 0) {
+                    deltaEl.className = "dash-delta delta-up";
+                    deltaEl.innerText = `涨幅 +${formatScore(delta)} (较上次)`;
+                } else if (delta < 0) {
+                    deltaEl.className = "dash-delta delta-down";
+                    deltaEl.innerText = `跌幅 -${formatScore(Math.abs(delta))} (较上次)`;
+                } else {
+                    deltaEl.className = "dash-delta delta-zero";
+                    deltaEl.innerText = `涨幅 +0.00 (无变化)`;
+                }
+            } else {
+                deltaEl.className = "dash-delta delta-zero";
+                deltaEl.innerText = `涨幅 首次载入`;
+            }
+            lastTargetScore = targetScore; // 保存本次分数
+
+            // 计算与上一名、下一名的分差（从左到右：上一名 -> 本人 -> 下一名）
+            const prevItem = rankList[targetIndex - 1];
+            const nextItem = rankList[targetIndex + 1];
+
+            if (prevItem) {
+                const prevScore = Number(prevItem.rank_info.score || 0);
+                const prevRank = prevItem.rank_info.rank;
+                document.getElementById("prev-label").innerText = `距上一名 (第${prevRank}名)`;
+                document.getElementById("prev-val").innerText = `-${formatScore(prevScore - targetScore)}`;
+            } else {
+                document.getElementById("prev-label").innerText = `距上一名`;
+                document.getElementById("prev-val").innerText = `已经是第一名`;
+            }
+
+            if (nextItem) {
+                const nextScore = Number(nextItem.rank_info.score || 0);
+                const nextRank = nextItem.rank_info.rank;
+                document.getElementById("next-label").innerText = `领先下一名 (第${nextRank}名)`;
+                document.getElementById("next-val").innerText = `+${formatScore(targetScore - nextScore)}`;
+            } else {
+                document.getElementById("next-label").innerText = `领先下一名`;
+                document.getElementById("next-val").innerText = `已在榜底`;
+            }
+
+
+            // --- 2. 渲染下方列表（显示前后各 2 名） ---
+            const range = 2; // 可随时调整显示前后 N 名
             const startIndex = Math.max(0, targetIndex - range);
             const endIndex = Math.min(rankList.length - 1, targetIndex + range);
-
             const displayList = rankList.slice(startIndex, endIndex + 1);
 
             displayList.forEach(item => {
                 const rank = item.rank_info.rank;
                 const name = item.rank_info.element_info.nick_name;
                 const score = Number(item.rank_info.score || 0);
-                const isTarget = (item === targetItem); // 以物件引用判断是否为目标主播
+                const isTarget = (item === targetItem);
 
                 const card = document.createElement("div");
                 card.className = `anchor-card ${isTarget ? 'target' : ''}`;
@@ -326,7 +418,7 @@
                         diffHtml = `<div class="diff-tag behind">落后 ${realTargetName} ${formatScore(diff)}</div>`;
                     }
                 } else {
-                    diffHtml = `<div class="diff-tag" style="color: #ffffff; background: rgba(255,255,255,0.2);">监测中</div>`;
+                    diffHtml = `<div class="diff-tag" style="color: #ffffff; background: rgba(255,255,255,0.25);">监测中</div>`;
                 }
 
                 card.innerHTML = `
@@ -345,10 +437,10 @@
 
         } catch (err) {
             console.error(err);
-            showError(`数据获取失败: ${err.message}。如果持续失败，代表需要部署 CORS 云函数代理。`);
+            showError(`数据获取失败: ${err.message}`);
         }
     }
-    // 倒计时控制
+
     function startTimer() {
         countdown = CONFIG.REFRESH_INTERVAL;
         document.getElementById("next-update").innerText = countdown;
@@ -366,13 +458,10 @@
         }, 1000);
     }
 
-    // 初始化运行
-    function init() {
+    window.onload = () => {
         updateDashboard();
         startTimer();
-    }
-
-    window.onload = init;
+    };
 </script>
 </body>
 </html>

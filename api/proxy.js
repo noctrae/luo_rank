@@ -18,8 +18,9 @@ export default async function handler(req, res) {
 
     let targetItem = null;
     for(const item of list){
-      const nick = item.element_info.nick_name.trim();
-      if(nick === "羅"){
+      // 加上可選鏈 ?. ，如果element_info為undefined，整個表達式得到undefined，不會崩程式
+      const nick = item?.element_info?.nick_name ?? "";
+      if(nick.trim() === "羅"){
         targetItem = item;
         break;
       }
@@ -27,13 +28,13 @@ export default async function handler(req, res) {
     if(!targetItem){
       return res.status(200).json({code:-1,msg:"未找到主播【羅】"});
     }
-    const targetScore = Number(targetItem.rank_info.score);
-    const targetRank = targetItem.rank_info.rank;
+    const targetScore = Number(targetItem?.score ?? 0);
+    const targetRank = Number(targetItem?.rank ?? 0);
     let prevScore=null,nextScore=null;
     for(const it of list){
-      const r = it.rank_info.rank;
-      if(r === targetRank -1) prevScore = Number(it.rank_info.score);
-      if(r === targetRank +1) nextScore = Number(it.rank_info.score);
+      const r = Number(it?.rank ?? 0);
+      if(r === targetRank -1) prevScore = Number(it?.score ?? 0);
+      if(r === targetRank +1) nextScore = Number(it?.score ?? 0);
     }
     res.status(200).json({
       code:0,

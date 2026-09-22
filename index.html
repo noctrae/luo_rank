@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>抖音直播榜单实时监测器</title>
+    <title>造梦师S3巅峰赛｜羅 全自动看板</title>
     <style>
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
-            --target-bg: #2563eb;
+            --target-bg: #3b82f6;
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
             --accent-green: #22c55e;
@@ -46,7 +46,7 @@
             border: 2px solid var(--target-bg);
             border-radius: 16px;
             padding: 18px 16px;
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
             text-align: center;
         }
 
@@ -121,12 +121,18 @@
             font-family: monospace;
         }
 
+        .diff-box .delta-sub {
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
         .status-bar {
             font-size: 0.8rem;
             color: var(--text-secondary);
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             padding: 0 4px;
         }
 
@@ -139,26 +145,30 @@
         .anchor-card {
             background-color: var(--card-bg);
             border-radius: 10px;
-            padding: 12px 14px;
+            padding: 14px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             border: 1px solid var(--border-color);
+            transition: transform 0.2s;
         }
 
         .anchor-card.target {
-            background-color: #1d4ed8;
+            background-color: var(--target-bg);
             border-color: #60a5fa;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         .rank-badge {
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: bold;
-            width: 65px;
+            width: 70px;
             color: var(--text-secondary);
         }
 
-        .anchor-card.target .rank-badge { color: #ffffff; }
+        .anchor-card.target .rank-badge {
+            color: #ffffff;
+        }
 
         .info-section {
             flex-grow: 1;
@@ -166,37 +176,58 @@
             flex-direction: column;
         }
 
-        .nick-name { font-size: 0.95rem; font-weight: 600; }
-        .score-val { font-size: 1rem; font-weight: bold; font-family: monospace; }
+        .nick-name {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .score-val {
+            font-size: 1.1rem;
+            font-weight: bold;
+            font-family: monospace;
+        }
 
         .diff-tag {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
+            text-align: right;
             padding: 4px 8px;
             border-radius: 4px;
             font-weight: 500;
         }
 
-        .diff-tag.ahead { color: #fca5a5; background-color: rgba(239, 68, 68, 0.15); }
-        .diff-tag.behind { color: #86efac; background-color: rgba(34, 197, 94, 0.15); }
+        .diff-tag.ahead {
+            color: #fca5a5;
+            background-color: rgba(239, 68, 68, 0.15);
+        }
+
+        .diff-tag.behind {
+            color: #86efac;
+            background-color: rgba(34, 197, 94, 0.15);
+        }
 
         .footer-info {
             text-align: center;
             font-size: 0.8rem;
             color: var(--text-secondary);
-            margin-top: 6px;
+            margin-top: 8px;
         }
 
         .error-msg {
             background-color: rgba(239, 68, 68, 0.2);
             color: var(--accent-red);
             border: 1px solid var(--accent-red);
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             font-size: 0.85rem;
             display: none;
+            word-break: break-all;
         }
 
-        .loading { text-align: center; padding: 20px; color: var(--text-secondary); }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
@@ -204,12 +235,12 @@
 <div class="container">
     <div class="status-bar">
         <span>最后更新: <span id="last-update">--:--:--</span></span>
-        <span>下次刷新: <span id="next-update">60</span>s</span>
+        <span>下次更新: <span id="next-update">5</span>s</span>
     </div>
 
-    <!-- 顶部核心主看板 -->
+    <!-- 顶部主看板 -->
     <header id="main-dashboard" class="dashboard-header">
-        <div class="dash-title">目标主播实时监视</div>
+        <div class="dash-title">造梦师S3巅峰赛｜实时监视</div>
         <div class="dash-target-name">
             <span id="dash-name">羅</span>
             <span id="dash-rank" class="dash-rank-badge">第 -- 名</span>
@@ -217,15 +248,17 @@
         <div id="dash-score" class="dash-score">0.00</div>
         <div id="dash-delta" class="dash-delta delta-zero">涨幅: -- (较上次)</div>
 
-        <!-- 从左到右：上一名差距 | 下一名差距 -->
+        <!-- 左右对比区：上一名 (差距+对方涨幅) | 下一名 (差距+对方涨幅) -->
         <div class="dash-diff-grid">
             <div class="diff-box">
                 <span class="label" id="prev-label">距上一名</span>
                 <span class="val" id="prev-val" style="color: #fca5a5;">--</span>
+                <span class="delta-sub delta-zero" id="prev-delta">对方涨幅: --</span>
             </div>
             <div class="diff-box">
                 <span class="label" id="next-label">领先下一名</span>
                 <span class="val" id="next-val" style="color: #86efac;">--</span>
+                <span class="delta-sub delta-zero" id="next-delta">对方涨幅: --</span>
             </div>
         </div>
     </header>
@@ -237,29 +270,25 @@
     </main>
 
     <div class="footer-info">
-        <span id="total-count">共 -- 名</span> | 自动刷新间隔: 60 秒
+        <span id="total-count">共 -- 名</span> | 自动刷新间隔: 5 秒
     </div>
 </div>
 
 <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const targetParam = urlParams.get('target');
-    const customApiParam = urlParams.get('api');
-
-    // 默认“巅峰对决”榜单 API
-    const DEFAULT_API = "https://webcast.amemv.com/magic/api/v4/MjQxNzU2ODIxMjgx/ranklist/MjQxNzU2ODIxMjkw/list?page_num=1&page_size=50&contributor_count=3&guest_count=1&aid=1128";
-
+    // 基础配置
     const CONFIG = {
-        TARGET_NAME: targetParam || "羅",
-        REFRESH_INTERVAL: 60,
-        API_URL: customApiParam ? decodeURIComponent(customApiParam) : DEFAULT_API,
+        TARGET_NAME: "羅",       // 目标主播名字（完全匹配）
+        REFRESH_INTERVAL: 5,   // 刷新周期（秒）
+        API_URL: "https://webcast.amemv.com/magic/api/v4/MjQxNzU2ODIxMjgx/ranklist/MjQxNzU2ODIxMjkw/list?page_num=1&page_size=50&contributor_count=3&guest_count=1&aid=1128",
         CORS_PROXY: "https://api.allorigins.win/raw?url="
     };
 
     let countdown = CONFIG.REFRESH_INTERVAL;
     let timer = null;
     let useProxy = false;
-    let lastTargetScore = null; // 记录上一次的分数以计算涨幅
+
+    // 记录上一轮所有主播的分数以计算涨幅 (Key: 主播昵称, Value: 分数)
+    const previousScores = new Map();
 
     function formatScore(num) {
         return Number(num).toLocaleString('en-US', {
@@ -269,7 +298,8 @@
     }
 
     function getNowTimeString() {
-        return new Date().toTimeString().split(' ')[0];
+        const d = new Date();
+        return d.toTimeString().split(' ')[0];
     }
 
     function showError(msg) {
@@ -285,24 +315,48 @@
     }
 
     async function fetchRankList() {
-        let currentApi = CONFIG.API_URL;
-        let requestUrl = useProxy ? CONFIG.CORS_PROXY + encodeURIComponent(currentApi) : currentApi;
+        let requestUrl = useProxy ? CONFIG.CORS_PROXY + encodeURIComponent(CONFIG.API_URL) : CONFIG.API_URL;
         
         try {
             const response = await fetch(requestUrl);
-            if (!response.ok) throw new Error(`HTTP 错误: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP 错误！状态码: ${response.status}`);
+            }
 
             const outer = await response.json();
-            let data = typeof outer.data === "string" ? JSON.parse(outer.data) : outer.data;
+            let data = outer.data;
+            if (typeof data === "string") {
+                data = JSON.parse(data);
+            }
 
-            if (!data || !data.rank_list) throw new Error("API 返回结构不符合预期");
+            if (!data || !data.rank_list) {
+                throw new Error("API 返回结构不符合预期");
+            }
+
             return data;
         } catch (err) {
             if (!useProxy && (err.name === 'TypeError' || err.message.includes('Failed to fetch'))) {
+                console.warn("检测到可能存在 CORS 跨域限制，正在切换至 CORS 代理服务器...");
                 useProxy = true;
                 return await fetchRankList();
             }
             throw err;
+        }
+    }
+
+    // 计算单个主播的涨幅文本和 CSS 类名
+    function getDeltaInfo(anchorName, currentScore) {
+        if (!previousScores.has(anchorName)) {
+            return { text: "对方涨幅: 首次载入", class: "delta-zero" };
+        }
+        const lastScore = previousScores.get(anchorName);
+        const delta = currentScore - lastScore;
+        if (delta > 0) {
+            return { text: `对方涨幅 +${formatScore(delta)}`, class: "delta-up" };
+        } else if (delta < 0) {
+            return { text: `对方跌幅 -${formatScore(Math.abs(delta))}`, class: "delta-down" };
+        } else {
+            return { text: `对方涨幅 +0.00`, class: "delta-zero" };
         }
     }
 
@@ -313,11 +367,13 @@
 
             const rankList = data.rank_list || [];
             const totalCount = rankList.length;
-            document.getElementById("total-count").innerText = `共 ${totalCount}${data.has_more ? '+' : ''} 名`;
+            const hasMore = data.has_more;
+
+            document.getElementById("total-count").innerText = `共 ${totalCount}${hasMore ? '+' : ''} 名`;
 
             const targetKeywords = [CONFIG.TARGET_NAME, "羅", "罗"];
 
-            // 精确比对与包含比对
+            // 查找目标主播
             let targetIndex = rankList.findIndex(item => {
                 const nick = item.rank_info?.element_info?.nick_name || "";
                 return targetKeywords.some(kw => nick.trim() === kw);
@@ -326,7 +382,7 @@
             if (targetIndex === -1) {
                 targetIndex = rankList.findIndex(item => {
                     const nick = item.rank_info?.element_info?.nick_name || "";
-                    return targetKeywords.some(kw => nick.includes(kw));
+                    return targetKeywords.some(kw => kw.length > 0 && nick.includes(kw));
                 });
             }
 
@@ -334,7 +390,7 @@
             container.innerHTML = "";
 
             if (targetIndex === -1) {
-                container.innerHTML = `<div class="loading">未在榜单前 ${totalCount} 名中找到主播“${CONFIG.TARGET_NAME}”</div>`;
+                container.innerHTML = `<div class="loading">未在榜单前 ${totalCount} 名中找到包含“${CONFIG.TARGET_NAME}”的主播</div>`;
                 return;
             }
 
@@ -343,15 +399,14 @@
             const targetRank = targetItem.rank_info.rank;
             const targetScore = Number(targetItem.rank_info.score || 0);
 
-            // --- 1. 更新顶部主看板数据 ---
+            // --- 1. 更新顶部主看板（目标主播“羅”） ---
             document.getElementById("dash-name").innerText = realTargetName;
             document.getElementById("dash-rank").innerText = `第 ${targetRank} 名`;
             document.getElementById("dash-score").innerText = formatScore(targetScore);
 
-            // 计算与上次刷新的涨幅
             const deltaEl = document.getElementById("dash-delta");
-            if (lastTargetScore !== null) {
-                const delta = targetScore - lastTargetScore;
+            if (previousScores.has(realTargetName)) {
+                const delta = targetScore - previousScores.get(realTargetName);
                 if (delta > 0) {
                     deltaEl.className = "dash-delta delta-up";
                     deltaEl.innerText = `涨幅 +${formatScore(delta)} (较上次)`;
@@ -366,37 +421,63 @@
                 deltaEl.className = "dash-delta delta-zero";
                 deltaEl.innerText = `涨幅 首次载入`;
             }
-            lastTargetScore = targetScore; // 保存本次分数
 
-            // 计算与上一名、下一名的分差（从左到右：上一名 -> 本人 -> 下一名）
+            // --- 2. 更新上一名与下一名的差距和对方涨幅 ---
             const prevItem = rankList[targetIndex - 1];
             const nextItem = rankList[targetIndex + 1];
 
+            // 上一名
+            const prevDeltaEl = document.getElementById("prev-delta");
             if (prevItem) {
+                const prevName = prevItem.rank_info.element_info.nick_name;
                 const prevScore = Number(prevItem.rank_info.score || 0);
                 const prevRank = prevItem.rank_info.rank;
+
                 document.getElementById("prev-label").innerText = `距上一名 (第${prevRank}名)`;
                 document.getElementById("prev-val").innerText = `-${formatScore(prevScore - targetScore)}`;
+
+                const prevInfo = getDeltaInfo(prevName, prevScore);
+                prevDeltaEl.innerText = prevInfo.text;
+                prevDeltaEl.className = `delta-sub ${prevInfo.class}`;
             } else {
                 document.getElementById("prev-label").innerText = `距上一名`;
                 document.getElementById("prev-val").innerText = `已经是第一名`;
+                prevDeltaEl.innerText = `对方涨幅: --`;
+                prevDeltaEl.className = `delta-sub delta-zero`;
             }
 
+            // 下一名
+            const nextDeltaEl = document.getElementById("next-delta");
             if (nextItem) {
+                const nextName = nextItem.rank_info.element_info.nick_name;
                 const nextScore = Number(nextItem.rank_info.score || 0);
                 const nextRank = nextItem.rank_info.rank;
+
                 document.getElementById("next-label").innerText = `领先下一名 (第${nextRank}名)`;
                 document.getElementById("next-val").innerText = `+${formatScore(targetScore - nextScore)}`;
+
+                const nextInfo = getDeltaInfo(nextName, nextScore);
+                nextDeltaEl.innerText = nextInfo.text;
+                nextDeltaEl.className = `delta-sub ${nextInfo.class}`;
             } else {
                 document.getElementById("next-label").innerText = `领先下一名`;
                 document.getElementById("next-val").innerText = `已在榜底`;
+                nextDeltaEl.innerText = `对方涨幅: --`;
+                nextDeltaEl.className = `delta-sub delta-zero`;
             }
 
+            // --- 3. 保存本轮所有主播的分数（为下一次 5 秒刷新算涨幅） ---
+            rankList.forEach(item => {
+                const name = item.rank_info?.element_info?.nick_name;
+                const score = Number(item.rank_info?.score || 0);
+                if (name) previousScores.set(name, score);
+            });
 
-            // --- 2. 渲染下方列表（显示前后各 2 名） ---
-            const range = 2; // 可随时调整显示前后 N 名
+            // --- 4. 渲染下方卡片列表（显示前后各 5 名） ---
+            const range = 5; 
             const startIndex = Math.max(0, targetIndex - range);
             const endIndex = Math.min(rankList.length - 1, targetIndex + range);
+
             const displayList = rankList.slice(startIndex, endIndex + 1);
 
             displayList.forEach(item => {
@@ -418,7 +499,7 @@
                         diffHtml = `<div class="diff-tag behind">落后 ${realTargetName} ${formatScore(diff)}</div>`;
                     }
                 } else {
-                    diffHtml = `<div class="diff-tag" style="color: #ffffff; background: rgba(255,255,255,0.25);">监测中</div>`;
+                    diffHtml = `<div class="diff-tag" style="color: #ffffff; background: rgba(255,255,255,0.2);">监测中</div>`;
                 }
 
                 card.innerHTML = `
@@ -437,7 +518,7 @@
 
         } catch (err) {
             console.error(err);
-            showError(`数据获取失败: ${err.message}`);
+            showError(`数据获取失败: ${err.message}。如果持续失败，代表需要部署 CORS 云函数代理。`);
         }
     }
 
@@ -458,10 +539,12 @@
         }, 1000);
     }
 
-    window.onload = () => {
+    function init() {
         updateDashboard();
         startTimer();
-    };
+    }
+
+    window.onload = init;
 </script>
 </body>
 </html>

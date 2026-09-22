@@ -298,9 +298,12 @@
             const realTargetName = targetItem.rank_info.element_info.nick_name;
             const targetScore = Number(targetItem.rank_info.score || 0);
 
-            // 安全计算前 2 名和后 2 名（避免数组越界）
-            const startIndex = Math.max(0, targetIndex - 2);
-            const endIndex = Math.min(rankList.length - 1, targetIndex + 2);
+            // 假设想要显示前后各 N 名（例如 N = 3）
+            const range = 5; 
+
+            // 安全计算前 5 名和后 5 名（避免数组越界）
+            const startIndex = Math.max(0, targetIndex - range);
+            const endIndex = Math.min(rankList.length - 1, targetIndex + range);
 
             const displayList = rankList.slice(startIndex, endIndex + 1);
 
